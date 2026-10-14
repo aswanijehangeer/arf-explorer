@@ -87,7 +87,6 @@ There is no combined quality score and no "privacy safe" verdict.
 | `tests/metrics.R` | Analytical checks for distances and edge cases |
 | `scripts/smoke.R` | ARF generation, reproducibility, and app-loading checks |
 | `scripts/server-smoke.R` | Actual Shiny server, plot/table rendering, and setting changes |
-| `MEETING_WALKTHROUGH.md` | Short demonstration and scope discussion |
 | `VALIDATION.md` | Checks actually completed in the preparation environment |
 
 The project also has a minimal package structure. To try the installed launcher
@@ -97,10 +96,6 @@ after installing the dependencies:
 install.packages(".", repos = NULL, type = "source")
 arfexplorer::run_demo()
 ```
-
-Contributor and maintainer fields in `DESCRIPTION` are explicit placeholders.
-Replace them with actual agreed metadata before distributing a package release.
-The temporary companion name is also a discussion choice, not a thesis decision.
 
 ## Checks you can run
 
