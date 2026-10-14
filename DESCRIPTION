@@ -1,0 +1,16 @@
+Package: arfexplorer
+Type: Package
+Title: Learning Demo for Adversarial Random Forests
+Version: 0.0.1
+Authors@R: person("Jehangeer", "Menghwar",
+    email = "aswanijehangeer@gmail.com",
+    role = c("aut", "cre"))
+Description: An introductory 'shiny' application for exploring mixed
+    tabular data, generating synthetic data with the 'arf' package,
+    and comparing empirical distributions and numerical dependencies
+    against held-out real data. Designed for learning and demonstration.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: datasets, stats, utils
+Suggests: arf (>= 0.2.4), shiny
