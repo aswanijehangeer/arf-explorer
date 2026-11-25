@@ -243,7 +243,10 @@ ui <- fluidPage(
               "the same holdout. Real training vs holdout is a real-versus-real baseline. ",
               "It is a contextual comparison, not a significance threshold."
             ),
-            downloadButton("download_scores", "Download comparisons (CSV)")
+            downloadButton(
+              "download_scores",
+              "Download complete experiment (.xlsx)"
+            )
           ),
           card(
             "Are relationships preserved?",
@@ -579,25 +582,31 @@ server <- function(input, output, session) {
     digits = 4,
     rownames = FALSE
   )
+  dependence_results <- reactive({
+    sets <- comparisons()
+
+    do.call(
+      rbind,
+      lapply(names(sets), function(name) {
+        x <- demo$numeric_dependence(
+          partitions()$holdout,
+          sets[[name]]
+        )
+
+        data.frame(
+          Source = name,
+          Pair = x$pair,
+          Holdout = x$reference,
+          Comparison = x$comparison,
+          Absolute_gap = x$absolute_difference,
+          check.names = FALSE
+        )
+      })
+    )
+  })
+
   output$dependence_scores <- renderTable(
-    {
-      sets <- comparisons()
-      out <- do.call(
-        rbind,
-        lapply(names(sets), function(name) {
-          x <- demo$numeric_dependence(partitions()$holdout, sets[[name]])
-          data.frame(
-            Source = name,
-            Pair = x$pair,
-            Holdout = x$reference,
-            Comparison = x$comparison,
-            Absolute_gap = x$absolute_difference,
-            check.names = FALSE
-          )
-        })
-      )
-      out
-    },
+    dependence_results(),
     digits = 3,
     rownames = FALSE
   )
@@ -703,21 +712,73 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       req(result())
-      utils::write.csv(result()$synthetic, file, row.names = FALSE)
+
+      utils::write.csv2(
+        result()$synthetic,
+        file,
+        row.names = FALSE
+      )
+
+      showNotification(
+        "Synthetic data exported successfully.",
+        type = "message",
+        duration = 4
+      )
     }
   )
   output$download_scores <- downloadHandler(
     filename = function() {
-      paste0("comparisons_", input$dataset, "_seed", input$seed, ".csv")
+      paste0(
+        "arf_experiment_",
+        input$dataset,
+        "_seed",
+        input$seed,
+        ".xlsx"
+      )
     },
+
+    contentType = paste0(
+      "application/vnd.openxmlformats-",
+      "officedocument.spreadsheetml.sheet"
+    ),
+
     content = function(file) {
-      out <- scores()
-      out$dataset <- input$dataset
-      out$seed <- result()$seed
-      out$num_trees <- result()$num_trees
-      out$min_node_size <- result()$min_node_size
-      out$max_iters <- result()$max_iters
-      utils::write.csv(out, file, row.names = FALSE)
+      req(result())
+
+      if (!requireNamespace("writexl", quietly = TRUE)) {
+        stop("Please install the writexl package.")
+      }
+
+      run <- result()
+
+      settings <- data.frame(
+        Dataset = input$dataset,
+        Seed = run$seed,
+        Training_rows = nrow(partitions()$training),
+        Holdout_rows = nrow(partitions()$holdout),
+        Synthetic_rows = run$n_synth,
+        Num_trees = run$num_trees,
+        Min_node_size = run$min_node_size,
+        Max_iters = run$max_iters,
+        Elapsed_seconds = run$elapsed,
+        ARF_version = as.character(packageVersion("arf")),
+        R_version = R.version.string
+      )
+
+      workbook <- list(
+        "Synthetic data" = run$synthetic,
+        "Univariate" = scores(),
+        "Dependencies" = dependence_results(),
+        "Settings" = settings
+      )
+
+      writexl::write_xlsx(workbook, path = file)
+
+      showNotification(
+        "Experiment workbook exported successfully.",
+        type = "message",
+        duration = 4
+      )
     }
   )
 }
