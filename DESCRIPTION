@@ -13,4 +13,4 @@ License: GPL-3
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
 Imports: datasets, stats, utils
-Suggests: arf (>= 0.2.4), shiny
+Suggests: arf (>= 0.2.4), shiny, writxl
